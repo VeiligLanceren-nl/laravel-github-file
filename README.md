@@ -1,4 +1,12 @@
+![Veilig Lanceren](/veilig-lanceren-logo.png)
 
+This package is maintained by [VeiligLanceren.nl](https://veiliglanceren.nl), your partner in website development and everything else to power up your online company.
+
+# Laravel Github File
+
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/veiliglanceren/laravel-github-file.svg?style=flat-square)](https://packagist.org/packages/veiliglanceren/laravel-remote-documentation)
+[![Total Downloads](https://img.shields.io/packagist/dt/veiliglanceren/laravel-github-file.svg?style=flat-square)](https://packagist.org/packages/veiliglanceren/laravel-remote-documentation)
+[![License](https://img.shields.io/packagist/l/veiliglanceren/laravel-github-file.svg?style=flat-square)](LICENSE)
 
 # Laravel GitHub File
 
@@ -53,22 +61,6 @@ $zipPath = GithubFile::zip('owner/repo', 'path/to/file.txt');
 ```
 
 The ZIP file will be stored in the default disk's `zips` directory.
-
-## Facade Autocompletion
-
-To enable autocompletion for the `GithubFile` facade in IDEs like PhpStorm, add the following PHPDoc block to the facade class:
-
-```php
-/**
- * @method static string get(string $repository, string $filePath, string $branch = 'main')
- * @method static string download(string $repository, string $filePath, string $disk = 'local', string $branch = 'main')
- * @method static string zip(string $repository, string $filePath, string $disk = 'local', string $branch = 'main')
- *
- * @see \VeiligLanceren\GithubFile\Services\GithubFileService
- */
-```
-
-This will provide autocompletion for the `get`, `download`, and `zip` methods.
 
 ## Testing
 
