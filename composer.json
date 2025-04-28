@@ -1,0 +1,55 @@
+{
+    "name": "veiliglanceren/laravel-github-file",
+    "description": "Laravel package to fetch and manage files from GitHub repositories.",
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0 | ^11.0 | ^12.0",
+        "ext-zip": "*"
+    },
+    "require-dev": {
+        "guzzlehttp/guzzle": "^7.0",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
+        "pestphp/pest": "^2.0 || ^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0 || ^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "VeiligLanceren\\GithubFile\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "VeiligLanceren\\GithubFile\\GithubFileServiceProvider"
+            ],
+            "aliases": {
+                "GithubFile": "VeiligLanceren\\GithubFile\\Facades\\GithubFile"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "phpunit"
+    },
+    "authors": [
+        {
+            "name": "Niels Hamelink",
+            "email": "niels@veiliglanceren.nl"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
