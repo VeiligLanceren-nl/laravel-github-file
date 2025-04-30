@@ -66,7 +66,6 @@ class GithubFileService implements IGithubFileService
 
         if (substr($filePath, -1) === '/') {
             $filePath = rtrim($filePath, '/');
-
             $url = "https://api.github.com/repos/{$repository}/contents/{$filePath}?ref={$branch}";
             $response = Http::get($url);
 
