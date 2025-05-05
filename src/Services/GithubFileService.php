@@ -59,34 +59,38 @@ class GithubFileService implements IGithubFileService
     /**
      * {@inheritDoc}
      */
-    public function zip(string $repository, string $filePath, string $disk = 'local', string $branch = 'main'): string
+    public function zip(string $repository, string|array $filePaths, string $disk = 'local', string $branch = 'main'): string
     {
-        $files = [];
-        $filename = basename($filePath);
+        $filePaths = is_array($filePaths) ? $filePaths : [$filePaths];
+        $allFiles = [];
 
-        if (substr($filePath, -1) === '/') {
-            $filePath = rtrim($filePath, '/');
-            $url = "https://api.github.com/repos/{$repository}/contents/{$filePath}?ref={$branch}";
+        foreach ($filePaths as $filePath) {
+            $cleanPath = rtrim($filePath, '/');
+            $url = "https://api.github.com/repos/{$repository}/contents/{$cleanPath}?ref={$branch}";
             $response = Http::get($url);
 
-            if ($response->successful()) {
-                $filesData = $response->json();
+            if (! $response->successful()) {
+                throw new RuntimeException("Failed to fetch file from GitHub: {$url}");
+            }
 
-                foreach ($filesData as $file) {
-                    if ($file['type'] === 'file') {
-                        $fileContent = Http::get($file['download_url'])->body();
-                        $files[] = ['name' => $file['name'], 'content' => $fileContent];
+            $data = $response->json();
+
+            if (array_is_list($data)) {
+                foreach ($data as $item) {
+                    if ($item['type'] === 'file') {
+                        $fileContent = Http::get($item['download_url'])->body();
+                        $allFiles[] = ['name' => $item['name'], 'content' => $fileContent];
                     }
                 }
             } else {
-                throw new RuntimeException("Failed to fetch directory contents from GitHub: {$url}");
+                $content = base64_decode($data['content'] ?? '');
+                $allFiles[] = ['name' => basename($filePath), 'content' => $content];
             }
-        } else {
-            $fileContent = $this->get($repository, $filePath, $branch);
-            $files[] = ['name' => $filename, 'content' => $fileContent];
         }
 
-        return $this->fileZipService->createZip($filePath, $files, $disk);
+        $zipName = 'github-files';
+
+        return $this->fileZipService->createZip($zipName, $allFiles, $disk);
     }
 
 }
