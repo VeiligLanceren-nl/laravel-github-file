@@ -8,7 +8,7 @@ use VeiligLanceren\GithubFile\Interfaces\IGithubFileService;
 /**
  * @method static string get(string $repository, string $filePath, string $branch = 'main')
  * @method static string download(string $repository, string $filePath, string $disk = 'local', string $branch = 'main')
- * @method static string zip(string $repository, string $filePath, string $disk = 'local', string $branch = 'main')
+ * @method static string zip(string $repository, string|array $filePath, string $disk = 'local', string $branch = 'main')
  *
  * @see \VeiligLanceren\GithubFile\Services\GithubFileService
  */

@@ -60,7 +60,11 @@ Create a ZIP archive containing a file from a GitHub repository:
 $zipPath = GithubFile::zip('owner/repo', 'path/to/file.txt');
 ```
 
-The ZIP file will be stored in the default disk's `zips` directory.
+The ZIP file will be stored in the default disk's `zips` directory. Or zip multiple files at the same times.
+
+```php
+$zipPath = GithubFile::zip('owner/repo', ['path/to/file.txt', 'path/to/file2.txt']);
+```
 
 ## Testing
 
