@@ -31,11 +31,11 @@ interface IGithubFileService
      * Create a ZIP archive containing a file from a GitHub repository.
      *
      * @param string $repository The GitHub repository in the format 'owner/repo'.
-     * @param string $filePath   The path to the file within the repository.
-     * @param string $disk       The disk where the ZIP file should be stored.
-     * @param string $branch     The branch name. Defaults to 'main'.
+     * @param string|array $filePaths
+     * @param string $disk The disk where the ZIP file should be stored.
+     * @param string $branch The branch name. Defaults to 'main'.
      *
      * @return string The path where the ZIP file was stored.
      */
-    public function zip(string $repository, string $filePath, string $disk = 'local', string $branch = 'main'): string;
+    public function zip(string $repository, string|array $filePaths, string $disk = 'local', string $branch = 'main'): string;
 }
