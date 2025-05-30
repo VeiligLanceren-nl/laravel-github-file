@@ -2,6 +2,7 @@
 
 namespace VeiligLanceren\GithubFile\Services;
 
+use Illuminate\Support\Facades\Log;
 use ZipArchive;
 use RuntimeException;
 use Illuminate\Support\Facades\Storage;
@@ -16,23 +17,48 @@ class FileZipService implements IFileZipService
     {
         $zip = new ZipArchive();
         $zipFilename = basename($filePath) . '.zip';
-        $zipPath = "zips/{$zipFilename}";
-        $diskPath = Storage::disk($disk)->path('zips');
+        $relativePath = "zips/{$zipFilename}";
+        $tmpZip = tempnam(sys_get_temp_dir(), 'zip_');
 
-        if (!is_dir($diskPath)) {
-            mkdir($diskPath, 0777, true);
+        if ($tmpZip === false || !is_string($tmpZip)) {
+            throw new RuntimeException("Could not create temporary file for zip");
         }
 
-        if ($zip->open(Storage::disk($disk)->path($zipPath), ZipArchive::CREATE) !== true) {
-            throw new RuntimeException("Unable to create ZIP file at {$zipPath}");
+        if ($zip->open($tmpZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            throw new RuntimeException("Unable to open zip archive: $tmpZip");
         }
 
+        $fileCount = 0;
         foreach ($files as $file) {
-            $zip->addFromString($file['name'], $file['content']);
+            if (!isset($file['name'], $file['content'])) {
+                continue;
+            }
+
+            if (!$zip->addFromString($file['name'], $file['content'])) {
+                throw new RuntimeException("Failed to add file to zip: " . $file['name']);
+            }
+
+            $fileCount++;
         }
 
         $zip->close();
 
-        return Storage::disk($disk)->path($zipPath);
+        if ($fileCount === 0) {
+            throw new RuntimeException("No files were added to the zip archive.");
+        }
+
+        if (!file_exists($tmpZip)) {
+            throw new RuntimeException("Temporary ZIP file was not created: $tmpZip");
+        }
+
+        $zipContents = file_get_contents($tmpZip);
+        if ($zipContents === false) {
+            throw new RuntimeException("Failed to read temporary ZIP file: $tmpZip");
+        }
+
+        Storage::disk($disk)->put($relativePath, $zipContents);
+        unlink($tmpZip);
+
+        return Storage::disk($disk)->path($relativePath);
     }
 }

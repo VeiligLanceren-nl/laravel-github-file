@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use VeiligLanceren\GithubFile\Interfaces\IFileZipService;
 use VeiligLanceren\GithubFile\Interfaces\IGithubFileService;
+use VeiligLanceren\GithubFile\Exceptions\GithubFileException;
+use VeiligLanceren\GithubFile\Interfaces\IFileContentService;
 
 class GithubFileService implements IGithubFileService
 {
@@ -15,9 +17,15 @@ class GithubFileService implements IGithubFileService
      */
     private IFileZipService $fileZipService;
 
+    /**
+     * @var IFileContentService
+     */
+    private IFileContentService $fileContentService;
+
     public function __construct()
     {
         $this->fileZipService = app()->make(IFileZipService::class);
+        $this->fileContentService = app()->make(IFileContentService::class);
     }
 
     /**
@@ -62,30 +70,14 @@ class GithubFileService implements IGithubFileService
     public function zip(string $repository, string|array $filePaths, string $disk = 'local', string $branch = 'main'): string
     {
         $filePaths = is_array($filePaths) ? $filePaths : [$filePaths];
+        $filePaths = array_filter(
+            is_array($filePaths) ? $filePaths : [$filePaths],
+            fn ($path) => !empty($path)
+        );
         $allFiles = [];
 
         foreach ($filePaths as $filePath) {
-            $cleanPath = rtrim($filePath, '/');
-            $url = "https://api.github.com/repos/{$repository}/contents/{$cleanPath}?ref={$branch}";
-            $response = Http::get($url);
-
-            if (! $response->successful()) {
-                throw new RuntimeException("Failed to fetch file from GitHub: {$url}");
-            }
-
-            $data = $response->json();
-
-            if (array_is_list($data)) {
-                foreach ($data as $item) {
-                    if ($item['type'] === 'file') {
-                        $fileContent = Http::get($item['download_url'])->body();
-                        $allFiles[] = ['name' => $item['name'], 'content' => $fileContent];
-                    }
-                }
-            } else {
-                $content = base64_decode($data['content'] ?? '');
-                $allFiles[] = ['name' => basename($filePath), 'content' => $content];
-            }
+            $allFiles = array_merge($allFiles, $this->collectFilesRecursively($repository, $filePath, $branch));
         }
 
         $zipName = 'github-files';
@@ -93,4 +85,43 @@ class GithubFileService implements IGithubFileService
         return $this->fileZipService->createZip($zipName, $allFiles, $disk);
     }
 
+    /**
+     * Recursively collect all files from a GitHub directory path.
+     *
+     * @param string $repository
+     * @param string $path
+     * @param string $branch
+     * @return array<array{name: string, content: string}>
+     * @throws GithubFileException
+     */
+    private function collectFilesRecursively(string $repository, string $path, string $branch): array
+    {
+        try {
+            $content = $this->fileContentService->get($repository, $path, $branch);
+            return [[
+                'name' => $path,
+                'content' => $content,
+            ]];
+        } catch (GithubFileException) {
+        }
+
+        try {
+            $items = $this->fileContentService->getDirectoryListing($repository, $path, $branch);
+        } catch (GithubFileException) {
+            return [];
+        }
+
+        $files = [];
+
+        foreach ($items as $item) {
+            if (($item['type'] ?? '') === 'file' && isset($item['download_url'])) {
+                $fileContent = Http::get($item['download_url'])->body();
+                $files[] = ['name' => $item['path'], 'content' => $fileContent];
+            } elseif (($item['type'] ?? '') === 'dir' && isset($item['path'])) {
+                $files = array_merge($files, $this->collectFilesRecursively($repository, $item['path'], $branch));
+            }
+        }
+
+        return $files;
+    }
 }
