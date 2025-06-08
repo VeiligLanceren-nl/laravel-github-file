@@ -14,7 +14,7 @@ abstract class TestCase extends OrchestraTestCase
     protected function getPackageProviders($app): array
     {
         return [
-            GithubFileServiceProvider::class,
+            GithubFileSErviceProvider::class,
         ];
     }
 }
